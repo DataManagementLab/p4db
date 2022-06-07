@@ -1,0 +1,14 @@
+*.d
+*.o
+main
+
+*.txt
+*.tar.gz
+*.gz
+*.dot
+*.png
+
+rmaxcut/
+MQLib/
+FaspHeuristic/
+Feedback-Arc-Set/

@@ -1,0 +1,10 @@
+[wrap-file]
+directory = dpdk-20.08
+
+source_url = http://fast.dpdk.org/rel/dpdk-20.08.tar.xz
+source_filename = dpdk-20.08.0.tar.xz
+source_hash = 1a33ff04651b5c5ba3da212324bd93bce3e3976fe899d9420ac832d9a459b047
+
+
+[provide]
+dependency_names = libdpdk
