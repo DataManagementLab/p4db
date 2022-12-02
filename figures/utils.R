@@ -11,10 +11,10 @@ read_csv <- function(filename) {
 
 
 GROUP_BY_COLS = c(
-    "workload", "num_nodes", "num_txn_workers", "cc_scheme", "use_switch", "metric", "switch_no_conflict", "lm_on_switch", "ycsb_opti_test", # default
+    "workload", "num_nodes", "num_txn_workers", "cc_scheme", "use_switch", "metric", "switch_no_conflict", "lm_on_switch", "ycsb_opti_test", "switch_entries", # default
     "ycsb_hot_prob", "ycsb_hot_size", "ycsb_table_size", "ycsb_write_prob", "ycsb_remote_prob", #ycsb
     "smallbank_remote_prob", "smallbank_table_size", "smallbank_hot_prob", "smallbank_hot_size", #smallbank
-    "tpcc_num_warehouses", "new_order_remote_prob" #tpcc
+    "tpcc_num_warehouses", "new_order_remote_prob", "tpcc_switch_entries" #tpcc
 )
 
 
@@ -25,8 +25,16 @@ p4db_read <- function(df, csv_file) {
         mutate(
             lm_on_switch = ifelse("lm_on_switch" %in% names(.), lm_on_switch, "false"),
             hot_commit_ratio = ifelse("hot_commit_ratio" %in% names(.), hot_commit_ratio, 0),
-            txn_latency = ifelse("txn_latency" %in% names(.), txn_latency, 0),
-            ycsb_opti_test = ifelse("ycsb_opti_test" %in% names(.), ycsb_opti_test, "false")
+            txn_latency = ifelse("txn_latency" %in% names(.), txn_latency, 0), # DEPRECATED
+            ycsb_opti_test = ifelse("ycsb_opti_test" %in% names(.), ycsb_opti_test, "false"),
+            tpcc_switch_entries = ifelse("tpcc_switch_entries" %in% names(.), tpcc_switch_entries, NA),
+            switch_entries = ifelse("switch_entries" %in% names(.), switch_entries, NA),
+
+            commit_latency = ifelse("commit_latency" %in% names(.), commit_latency, 0),
+            latch_contention = ifelse("latch_contention" %in% names(.), latch_contention, 0),
+            remote_latency = ifelse("remote_latency" %in% names(.), remote_latency, 0),
+            local_latency = ifelse("local_latency" %in% names(.), local_latency, 0),
+            switch_txn_latency = ifelse("switch_txn_latency" %in% names(.), switch_txn_latency, 0)
         ) %>%
         gather(key="metric", value="total_sep", total_aborts, total_commits) %>%
         mutate(
@@ -38,7 +46,14 @@ p4db_read <- function(df, csv_file) {
             throughput=sum(throughput),
             rate=total_sep/total_txns,
             hot_commit_ratio=mean(hot_commit_ratio),
-            txn_latency=mean(txn_latency)
+            txn_latency=mean(txn_latency), # DEPRECATED
+            avg_duration=mean(avg_duration),
+
+            commit_latency=median(commit_latency),
+            latch_contention=median(latch_contention),
+            remote_latency=median(remote_latency),
+            local_latency=median(local_latency),
+            switch_txn_latency=median(switch_txn_latency)
         ) %>%
 
         group_by_at(GROUP_BY_COLS) %>%
@@ -46,7 +61,14 @@ p4db_read <- function(df, csv_file) {
             throughput=max(throughput),
             rate=median(rate),
             hot_commit_ratio=median(hot_commit_ratio),
-            txn_latency=median(txn_latency)
+            txn_latency=median(txn_latency),
+            avg_duration=mean(avg_duration),
+
+            commit_latency=median(commit_latency),
+            latch_contention=median(latch_contention),
+            remote_latency=median(remote_latency),
+            local_latency=median(local_latency),
+            switch_txn_latency=median(switch_txn_latency)
         ) %>%
 
         mutate(
@@ -68,6 +90,7 @@ p4db_read <- function(df, csv_file) {
             facet_label_smallbank=sprintf("%dx%d Hot Customers", num_nodes, smallbank_hot_size),
             facet_label_tpcc=sprintf("%d Warehouses", tpcc_num_warehouses)
         ) %>%
+        ungroup() %>%
         return
 }
 
